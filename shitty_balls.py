@@ -19,14 +19,17 @@ def reflected(vector, axis):
 
 def refracted(vector, norm, n1, n2):
     n = n1 / n2
-    n = 0.95
     cosI = -np.dot(norm, vector)
     sinT2 = n ** 2 * (1 - cosI ** 2)
     cosT = np.sqrt(1 - sinT2)
     # if cosI < 0.25:
     #     return reflected(vector, norm)
     return n * vector + (n * cosI - cosT) * norm
-    # return vector
+
+
+def refracted2(vector, norm, n1, n2):
+    n = n2/n1
+    return n*(vector - np.dot(norm, vector) * norm) + np.sqrt(1 - n ** 2 * (1 - np.dot(norm, vector) ** 2)) * norm
 
 
 def sphere_intersect(center, radius, ray_origin, ray_direction):
@@ -50,7 +53,6 @@ def glass_intersect(center, radius, ray_origin, ray_direction):
         t1 = (-b + np.sqrt(delta)) / 2
         t2 = (-b - np.sqrt(delta)) / 2
         # returns cords of intersection
-        print(t1, t2)
         if max(t1, t2) > 0:
             return ray_origin + max(t1, t2) * ray_direction
     return None
@@ -103,7 +105,7 @@ def sphere_trace(origin, direction, min_distance, sphere, light, color, reflecti
     else:
         color += reflection * illumination
 
-    reflection *= sphere['reflection']
+    reflection *= sphere['reflection'] * 0.5
     origin = shifted_point
     direction = reflected(direction, normal_to_surface)
 
@@ -114,7 +116,6 @@ def glass_trace(origin, direction, min_distance, glass, light, color, reflection
     intersection = origin + min_distance * direction
     normal_to_surface = normalize(intersection - glass['center'])
     shifted_point = intersection + 1e-5 * normal_to_surface
-    intersection_to_light = normalize(light['position'] - shifted_point)
 
     # 1st refraction
     origin = intersection - 1e-5 * normal_to_surface
@@ -123,7 +124,7 @@ def glass_trace(origin, direction, min_distance, glass, light, color, reflection
     intersection = glass_intersect(glass['center'], glass['radius'], origin, direction)
     normal_to_surface = normalize(intersection - glass['center'])
     origin = intersection + 1e-5 * normal_to_surface
-    direction = refracted(direction, normal_to_surface, 1, 1.5)
+    direction = refracted2(direction, normal_to_surface, 1, 1.5)
 
     return origin, direction, color, reflection
 
@@ -145,8 +146,8 @@ light = {'position': np.array([1, 3, 4]), 'ambient': np.array([1, 1, 1]), 'diffu
 objects = [
     {'center': np.array([-0.5, 0, -0.2]), 'radius': 0.3, 'ambient': np.array([0.1, 0., 0]), 'specular': np.array([1, 1, 1]), 'shininess': 200, 'reflection': 0.5, 'type': 'sphere'},
     {'center': np.array([0.5, 2, -5]), 'radius': 2, 'ambient': np.array([0, 0.1, 0.1]), 'specular': np.array([1, 1, 1]), 'shininess': 200, 'reflection': 0.5, 'type': 'sphere'},
-    {'center': np.array([0.0, 0, 0.2]), 'radius': 0.2, 'ambient': np.array([0., 0, 0.1]), 'specular': np.array([1, 1, 1]), 'shininess': 200, 'reflection': 0.5, 'type': 'glass'},
-    {'center': np.array([0.5, 0, -0.2]), 'radius': 0.3, 'ambient': np.array([0, 0.1, 0.]), 'specular': np.array([1, 1, 1]), 'shininess': 200, 'reflection': 0.5, 'type': 'sphere'},
+    {'center': np.array([0.15, 0.1, 0.6]), 'radius': 0.2, 'ambient': np.array([0., 0, 0.1]), 'specular': np.array([1, 1, 1]), 'shininess': 200, 'reflection': 0.5, 'type': 'glass'},
+    {'center': np.array([0.5, 0.3, -0.2]), 'radius': 0.25, 'ambient': np.array([0, 0.1, 0.]), 'specular': np.array([1, 1, 1]), 'shininess': 200, 'reflection': 0.5, 'type': 'sphere'},
     {'center': np.array([0, -9000, 0]), 'radius': 9000 - 0.7, 'ambient': np.array([0.1, 0.1, 0.1]), 'specular': np.array([1, 1, 1]), 'shininess': 200, 'reflection': 0.5, 'type': 'sphere'}
 ]
 
